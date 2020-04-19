@@ -14,10 +14,13 @@
     <grid-layout :layout="layout" :col-num="24" :row-height="30" :is-draggable="draggable" :is-resizable="resizable"
       :vertical-compact="true" :margin="[10, 10]" :use-css-transforms="true">
       <grid-item v-for="item in layout" :key="item.i" class="vue-grid-item" :x="item.x" :y="item.y" :w="item.w"
-        :h="item.h" :i="item.i">
-        <div class="item-charts">
+        :h="item.h" :i="item.i" :isDraggable="item.isDraggable" :isResizable="item.isResizable" @moved="movedEvent">
+        <div v-if="item.type === 'row'" class="row" @click="changeCollapsed(item)">
+          <i :class="item.collapsed?'el-icon-arrow-right':'el-icon-arrow-down'"></i>{{item.title}}
+        </div>
+        <div class="item-charts" v-else>
           <MyChart :id="item.i"></MyChart>
-          </div>
+        </div>
       </grid-item>
     </grid-layout>
   </div>
@@ -32,23 +35,47 @@
   const testLayout = [{
       "x": 0,
       "y": 0,
-      "w": 12,
-      "h": 8,
-      "i": "0"
+      "w": 24,
+      "h": 1,
+      "i": "0",
+      isDraggable: false,
+      isResizable: false,
+      type: 'row',
+      title: 'CPU',
+      collapsed: false
     },
     {
-      "x": 12,
-      "y": 0,
+      "x": 0,
+      "y": 1,
       "w": 12,
       "h": 8,
       "i": "1"
     },
     {
+      "x": 12,
+      "y": 1,
+      "w": 12,
+      "h": 8,
+      "i": "2"
+    },
+    {
       "x": 0,
-      "y": 5,
+      "y": 9,
+      "w": 24,
+      "h": 1,
+      "i": "3",
+      isDraggable: false,
+      isResizable: false,
+      type: 'row',
+      title: 'MEMORY',
+      collapsed: false
+    },
+    {
+      "x": 0,
+      "y": 10,
       "w": 24,
       "h": 10,
-      "i": "2"
+      "i": "4"
     }
     // {
     //   "x": 6,
@@ -182,14 +209,45 @@
       return {
         layout: testLayout,
         draggable: true,
-        resizable: true
+        resizable: true,
+        rowList: [],
       };
     },
     watch: {},
     computed: {},
-    methods: {},
+    methods: {
+      changeCollapsed(data) {
+        data.collapsed = !data.collapsed;
+        if (data.collapsed) {
+          const start = this.layout.findIndex(o => o.i === data.i) + 1;
+          const rowEnd = this.rowList.findIndex(o => o.i === data.i) + 1;
+          const end = rowEnd >= this.rowList.length ? this.layout.length : this.layout.findIndex(o => o.i === this.rowList[rowEnd].i);
+          const sp = this.layout.splice(start, end-start);
+          data.panle = sp;
+        } else {
+          const start = this.layout.findIndex(o => o.i === data.i)+1;
+          console.log(start)
+          const maxh = data.panle.map(o=>o.h).sort((a,b)=>a-b)[0];
+          this.layout.forEach((o,index)=>{
+            index >= start ? o.y += maxh:'';
+          })
+          this.layout.splice(start,0,...data.panle);
+        }
+      },
+      movedEvent( i, newX, newY) {
+        console.log("移动结束了", i, newX, newY);
+        this.layout.sort((a,b)=>{
+          if(a.y === b.y){
+            return a.x - b.x;
+          }
+          return a.y - b.y;
+        })
+      }
+    },
     created() {},
-    mounted() {}
+    mounted() {
+      this.rowList = this.layout.filter(o => o.type === 'row');
+    }
   };
 </script>
 <style lang="scss" scoped>
@@ -209,12 +267,20 @@
   }
 
   .vue-grid-item {
-    border: 1px solid #E0E0E0;
+    background: #FFF;
   }
-  .item-charts{
+
+  .item-charts {
+    border: 1px solid #E0E0E0;
     width: 100%;
     height: 100%;
-    padding: 0 10px 10px;
     box-sizing: border-box;
+  }
+
+  .row {
+    text-align: left;
+    cursor: pointer;
+    line-height: 30px;
+    font-weight: 500;
   }
 </style>

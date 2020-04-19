@@ -1,7 +1,9 @@
 <template>
 <div class="chart">
     <div class="chart-title">panel{{id}}</div>
-    <chart :options="options" autoresize></chart></div>
+    <div class="chart2">
+      <chart :options="options" autoresize></chart></div>
+    </div>
 </template>
 <script>
 import chart from 'vue-echarts';
@@ -55,11 +57,19 @@ export default {
     height: 28px;
     line-height: 28px;
     cursor: move;
-    
+    &:hover{
+      background-color: #e9edf2;
+    }
   }
 }
 .echarts {
   width: 100%;
   height: calc(100% - 28px);
+}
+.chart2{
+  width: 100%;
+  height: 100%;
+  padding: 0 10px 10px;
+  box-sizing: border-box;
 }
 </style>
